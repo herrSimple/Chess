@@ -89,20 +89,20 @@ class ChessBoard():
 
 	# Called when class instance is printed with print(), 
 	def __str__(self):
-		print_board = "    H   G   F   E   D   C   B   A\n"
+		print_board = "    A   B   C   D   E   F   G   H\n"
 		print_board += "  " + "===="*8 + "==\n"
-		for rIdx in range(8):
-			print_board += str(rIdx) + " |"
+		for rIdx in range(-8, 0, 1):
+			print_board += str(-rIdx) + " |"
 			for cIdx in range(8):
 				pos = self.square(rIdx, cIdx)
 				if pos == EMPTY:
 					print_board += " -- "
 				else:
 					print_board += " " + piece_format(pos) + " "
-			print_board += "| " + str(rIdx) + "\n"
+			print_board += "| " + str(-rIdx) + "\n"
 
 		print_board += "  " + "===="*8 + "==\n"
-		print_board += "    H   G   F   E   D   C   B   A\n"	
+		print_board += "    A   B   C   D   E   F   G   H\n"	
 		return print_board
 
 	# I've used the dcopy function to prevent the accidental modification of data thorough the getter methods
