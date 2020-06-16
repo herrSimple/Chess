@@ -40,17 +40,18 @@ PIECES = [PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING]
 PIECE_VALUE = {PAWN: 1, BISHOP: 3, KNIGHT: 3.5, ROOK: 5, QUEEN: 10, KING: 0} # what do we do for the KINGs value? 
 
 # For converting list index and chess boards index
+# Todo: is this correct?
 NUMBER_TO_LETTER = {n: "hgfedcba"[n] for n in range(8)}
 LETTER_TO_NUMBER = {"hgfedcba"[n]: n for n in range(8)}
 
 
-# Helper function for printing
+# Helper function for printing  
 def piece_format(piece):
 	if piece[NAME] == KNIGHT:
 		return piece[COLOR][0] + piece[NAME][1] 
 	else: 
 		return piece[COLOR][0] + piece[NAME][0] 
-
+		
 
 class ChessBoard():
 	# Called when creating class instance 
@@ -87,7 +88,7 @@ class ChessBoard():
 
 		self.__next_move = WHITE
 
-	# Called when class instance is printed with print(), 
+	# Called when class instance is printed with print()
 	def __str__(self):
 		print_board = "    A   B   C   D   E   F   G   H\n"
 		print_board += "  " + "===="*8 + "==\n"
