@@ -1,7 +1,7 @@
 from copy import deepcopy as dcopy
 
 # Constants 
-
+`
 COLOR = "COLOR"
 NAME = "NAME"
 
@@ -90,7 +90,7 @@ class ChessBoard():
 
     # Called when class instance is printed with print()
     def __str__(self):
-        print_board = "    0   1   2   3   4   5   6   7\n"
+        print_board = "\n    0   1   2   3   4   5   6   7\n"
         print_board += "  " + "===="*8 + "==\n"
         for rIdx in range(-8, 0, 1):
             print_board += str(-rIdx) + " |"
@@ -175,8 +175,6 @@ class ChessBoard():
             return False
 
     def make_move(self, start_idx, end_idx):
-
-        print("=== ChessBoard.make_move({}, {}) === ".format(start_idx, end_idx))
         
         # Extract the row and column indexes for ease of use
         start_rIdx = start_idx[0]
@@ -187,6 +185,8 @@ class ChessBoard():
         start_square = self.__board[start_rIdx][start_cIdx]
         end_square = self.__board[end_rIdx][end_cIdx]
 
+        print("\n=== ChessBoard.make_move({}, {}) ===".format(start_idx, end_idx))
+
         if start_square == EMPTY:
             raise Error("The start square is empty.")
         elif start_square[COLOR] != self.__current_move:
@@ -195,6 +195,12 @@ class ChessBoard():
         # Extract piece data
         piece_name = start_square[NAME]
         piece_color = start_square[COLOR]
+
+        print("\n=== Before move")
+        print("Start square:", start_square)
+        print("End square:", end_square)
+        print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
+        print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
         
         if end_square != EMPTY:
             if end_square[COLOR] == self.__current_move:
@@ -203,16 +209,40 @@ class ChessBoard():
                 # Extract data for piece being taken
                 take_name = end_square[NAME]
                 take_color = end_square[COLOR]
+
+                self.__take_update(piece_color, piece_name, take_name, take_color, start_rIdx, start_cIdx, end_rIdx, end_cIdx)
         else:
-            if piece_color == WHITE:
-                # Update the pieces dictionary
-                list_idx = self.__white_pieces[piece_name].index(start_idx)  # Finds the index of the position
-                self.__white_pieces[piece_name][list_idx] = end_idx  # Sets the piece position to the new position
-                # Update the board
-                self.__board[start_rIdx][start_cIdx] = EMPTY
-                self.__board[end_rIdx][end_cIdx] = end_square
-            elif piece_color == BLACK:
-                pass
+            self.__move_update(piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx)
+
+        print("\n=== After move")
+        print("Start square:", start_square)
+        print("End square:", end_square)
+        print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
+        print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
+
+    def __move_update(self, piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
+        
+        if self.__current_move == WHITE:
+            # Update the pieces dictionary
+            idx = self.__white_pieces[piece_name].index([start_rIdx, start_cIdx])   # Finds the index of the position
+            self.__white_pieces[piece_name][idx] = [start_rIdx, start_cIdx]         # Sets the piece position to the new position
+        
+        elif self.__current_move == BLACK:
+            # Update the pieces dictionary
+            idx = self.__black_pieces[piece_name].index([start_rIdx, start_cIdx])   # Finds the index of the position
+            self.__black_pieces[piece_name][idx] = [start_rIdx, start_cIdx]         # Sets the piece position to the new position
+
+        # Update the board
+        self.__board[start_rIdx][start_cIdx] = EMPTY
+        self.__board[end_rIdx][end_cIdx] = self.__create_piece(piece_color, piece_name)          
+
+    def __take_update(self, piece_color, piece_name, take_name, take_type, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
+        pass
+
+    @staticmethod
+    def __create_piece(color, name):
+        return {COLOR:color, NAME:name}
+
 
 
 
