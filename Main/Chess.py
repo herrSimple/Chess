@@ -1,7 +1,6 @@
 from copy import deepcopy as dcopy
 
 # Constants 
-`
 COLOR = "COLOR"
 NAME = "NAME"
 
@@ -17,26 +16,64 @@ ROOK = "ROOK"
 QUEEN = "QUEEN"
 KING = "KING"
 
-# Pieces as dictionaries, might not need these 
-WHITE_PAWN = {COLOR: WHITE, NAME: PAWN}
-WHITE_KNIGHT = {COLOR: WHITE, NAME: KNIGHT}
-WHITE_BISHOP = {COLOR: WHITE, NAME: BISHOP}
-WHITE_ROOK = {COLOR: WHITE, NAME: ROOK}
-WHITE_QUEEN = {COLOR: WHITE, NAME: QUEEN}
-WHITE_KING = {COLOR: WHITE, NAME: KING}
+# Piece keys 
+WHITE_PAWN = "WHITE_PAWN"
+WHITE_KNIGHT = "WHITE_KNIGHT"
+WHITE_BISHOP = "WHITE_BISHOP"
+WHITE_ROOK = "WHITE_ROOK"
+WHITE_QUEEN = "WHITE_QUEEN"
+WHITE_KING = "WHITE_KING"
 
-BLACK_PAWN = {COLOR: BLACK, NAME: PAWN}
-BLACK_KNIGHT = {COLOR: BLACK, NAME: KNIGHT}
-BLACK_BISHOP = {COLOR: BLACK, NAME: BISHOP}
-BLACK_ROOK = {COLOR: BLACK, NAME: ROOK}
-BLACK_QUEEN = {COLOR: BLACK, NAME: QUEEN}
-BLACK_KING = {COLOR: BLACK, NAME: KING}
+BLACK_PAWN = "BLACK_PAWN"
+BLACK_KNIGHT = "BLACK_KNIGHT"
+BLACK_BISHOP = "BLACK_BISHOP"
+BLACK_ROOK = "BLACK_ROOK"
+BLACK_QUEEN = "BLACK_QUEEN"
+BLACK_KING = "BLACK_KING"
 
 # Might not need these
+PIECE_NAMES = [PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING]
 WHITE_PIECES = [WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING]
 BLACK_PIECES = [BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING]
 
-PIECES = [PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING]
+# Piece data
+PIECE_DATA = {
+    WHITE_PAWN:     {COLOR: WHITE, NAME: PAWN}, 
+    WHITE_ROOK:     {COLOR: WHITE, NAME: ROOK}, 
+    WHITE_KNIGHT:   {COLOR: WHITE, NAME: KNIGHT}, 
+    WHITE_BISHOP:   {COLOR: WHITE, NAME: BISHOP}, 
+    WHITE_QUEEN:    {COLOR: WHITE, NAME: QUEEN}, 
+    WHITE_KING:     {COLOR: WHITE, NAME: KING},
+
+    BLACK_PAWN:     {COLOR: BLACK, NAME: PAWN}, 
+    BLACK_ROOK:     {COLOR: BLACK, NAME: ROOK}, 
+    BLACK_KNIGHT:   {COLOR: BLACK, NAME: KNIGHT}, 
+    BLACK_BISHOP:   {COLOR: BLACK, NAME: BISHOP}, 
+    BLACK_QUEEN:    {COLOR: BLACK, NAME: QUEEN}, 
+    BLACK_KING:     {COLOR: BLACK, NAME: KING}
+}
+
+# Piece creator
+CREATE_PIECE = {
+    WHITE: {
+        PAWN: WHITE_PAWN, 
+        ROOK: WHITE_ROOK, 
+        KNIGHT: WHITE_KNIGHT, 
+        BISHOP: WHITE_BISHOP, 
+        QUEEN: WHITE_QUEEN, 
+        KING: WHITE_KING
+    }, 
+
+    BLACK: {
+        PAWN: BLACK_PAWN, 
+        ROOK: BLACK_ROOK, 
+        KNIGHT: BLACK_KNIGHT, 
+        BISHOP: BLACK_BISHOP, 
+        QUEEN: BLACK_QUEEN, 
+        KING: BLACK_KING
+    }
+}
+
 PIECE_VALUE = {PAWN: 1, BISHOP: 3, KNIGHT: 3.5, ROOK: 5, QUEEN: 10, KING: 0} # what do we do for the KINGs value? 
 
 # For converting list index and chess boards index
@@ -45,15 +82,42 @@ NUMBER_TO_LETTER = {n: "hgfedcba"[n] for n in range(8)}
 LETTER_TO_NUMBER = {"hgfedcba"[n]: n for n in range(8)}
 
 
-# Helper function for printing  
-def piece_format(piece):
-    if piece[NAME] == KNIGHT:
-        return piece[COLOR][0] + piece[NAME][1] 
-    else: 
-        return piece[COLOR][0] + piece[NAME][0] 
+class Piece():
+    """
+    This class is just a namespace for methods relating to chess pieces.
+
+    For example to get a pieces color use: Piece.color(piece)   
+    """
+    # Chess piece helper functions
+    @staticmethod
+    def color(piece):
+        return PIECE_DATA[piece][COLOR]
+
+    @staticmethod
+    def name(piece):
+        return PIECE_DATA[piece][NAME]
+
+    @staticmethod
+    def data(piece):
+        return 
+
+    @staticmethod
+    def create(color, name):
+        return CREATE_PIECE[color][name]
+
+    @staticmethod
+    def value(piece):
+        return PIECE_VALUE[piece]
+
+    @staticmethod
+    def piece_format(piece):  
+        if Piece.name(piece) == KNIGHT:
+            return Piece.color(piece)[0] + Piece.name(piece)[1] 
+        else: 
+            return Piece.color(piece)[0] + Piece.name(piece)[0]
 
 
-class ChessBoard():
+class Board():
     # Called when creating class instance 
     def __init__(self):
 
@@ -70,18 +134,22 @@ class ChessBoard():
         ]
 
         # Piece dictionaries
-        self.__white_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []}
+        # May need combine and change the names to pieces, ie. PAWN --> WHITE_PAWN
+        self.__white_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []} 
         self.__black_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []}
+
+        self.__white_takes = {PAWN: 0, KNIGHT: 0, BISHOP: 0, ROOK: 0, QUEEN: 0, KING: 0}
+        self.__black_takes = {PAWN: 0, KNIGHT: 0, BISHOP: 0, ROOK: 0, QUEEN: 0, KING: 0}
 
         # Populates the piece dictionaries from the board
         for rIdx in range(8):
             for cIdx in range(8):
                 pos = self.__board[rIdx][cIdx]
                 if pos != EMPTY:
-                    if pos[COLOR] == WHITE:
-                        self.__white_pieces[pos[NAME]] += [[rIdx, cIdx]]
-                    elif pos[COLOR] == BLACK:
-                        self.__black_pieces[pos[NAME]] += [[rIdx, cIdx]]
+                    if Piece.color(pos) == WHITE:
+                        self.__white_pieces[Piece.name(pos)] += [[rIdx, cIdx]]
+                    elif Piece.color(pos) == BLACK:
+                        self.__black_pieces[Piece.name(pos)] += [[rIdx, cIdx]]
 
         self.__white_castled = False
         self.__black_castled = False
@@ -99,7 +167,7 @@ class ChessBoard():
                 if pos == EMPTY:
                     print_board += " -- "
                 else:
-                    print_board += " " + piece_format(pos) + " "
+                    print_board += " " + Piece.piece_format(pos) + " "
             print_board += "| " + str(8+rIdx) + "\n"
 
         print_board += "  " + "===="*8 + "==\n"
@@ -124,7 +192,7 @@ class ChessBoard():
     def black_pieces(self):
         return dcopy(self.__black_pieces)
 
-    def find_pieces(self, color, name):
+    def find_position(self, color, name):
         """
         Returns a list of positions for the pieces with COLOR: color and NAME: name
         """
@@ -150,14 +218,14 @@ class ChessBoard():
         """
         Returns the total value of the white pieces in the dict self.__white_pieces
         """
-        return sum([PIECE_VALUE[piece] * len(pos) for piece, pos in self.__white_pieces.items()])
+        return sum([Piece.value(piece) * len(pos) for piece, pos in self.__white_pieces.items()])
 
     @property
     def black_piece_value(self):
         """
         Returns the total value of the black pieces in the dict self.__black_pieces
         """
-        return sum([PIECE_VALUE[piece] * len(pos) for piece, pos in self.__black_pieces.items()])
+        return sum([Piece.value(piece) * len(pos) for piece, pos in self.__black_pieces.items()])
 
     # This needs to be changed to something that checks for checkmate
     @property
@@ -165,11 +233,11 @@ class ChessBoard():
         """
         Returns the color of the winner is there is one, else it returns False 
         """
-        if not self.find_pieces(WHITE, KING) and not self.find_pieces(BLACK, KING):
+        if not self.find_position(WHITE, KING) and not self.find_pieces(BLACK, KING):
             raise Error("Both kings are gone.")
-        elif not self.find_pieces(WHITE, KING):
+        elif not self.find_position(WHITE, KING):
             return BLACK
-        elif not self.find_pieces(BLACK, KING):
+        elif not self.find_position(BLACK, KING):
             return WHITE
         else:
             return False
@@ -189,12 +257,12 @@ class ChessBoard():
 
         if start_square == EMPTY:
             raise Error("The start square is empty.")
-        elif start_square[COLOR] != self.__current_move:
+        elif Piece.color(start_square) != self.__current_move:
             raise Error("The piece is the wrong color.")
 
         # Extract piece data
-        piece_name = start_square[NAME]
-        piece_color = start_square[COLOR]
+        piece_name = Piece.name(start_square)
+        piece_color = Piece.color(start_square)
 
         print("\n=== Before move")
         print("Start square:", start_square)
@@ -234,24 +302,16 @@ class ChessBoard():
 
         # Update the board
         self.__board[start_rIdx][start_cIdx] = EMPTY
-        self.__board[end_rIdx][end_cIdx] = self.__create_piece(piece_color, piece_name)          
+        self.__board[end_rIdx][end_cIdx] = Piece.create(piece_color, piece_name)          
 
     def __take_update(self, piece_color, piece_name, take_name, take_type, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
         pass
-
-    @staticmethod
-    def __create_piece(color, name):
-        return {COLOR:color, NAME:name}
 
 
 
 
 if __name__ == "__main__":
-    CB = ChessBoard()
-    print(CB.square(0, 0))
-    print(CB)
-    CB.square(0, 0)[COLOR] = WHITE
-    print(CB.square(0, 0))
+    CB = Board()
     print(CB)
     print("White pieces:", CB.white_pieces, "\n")
     print("Black pieces:", CB.black_pieces, "\n")
