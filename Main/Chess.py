@@ -93,21 +93,26 @@ class Piece():
     def color(piece):
         return PIECE_DATA[piece][COLOR]
 
+
     @staticmethod
     def name(piece):
         return PIECE_DATA[piece][NAME]
+
 
     @staticmethod
     def data(piece):
         return 
 
+
     @staticmethod
     def create(color, name):
         return CREATE_PIECE[color][name]
 
+
     @staticmethod
     def value(piece):
         return PIECE_VALUE[piece]
+
 
     @staticmethod
     def piece_format(piece):  
@@ -134,14 +139,10 @@ class Board():
         ]
 
         # Piece dictionaries
-        # May need combine and change the names to pieces, ie. PAWN --> WHITE_PAWN
         self.__white_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []} 
         self.__black_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []}
 
-        self.__white_takes = {PAWN: 0, KNIGHT: 0, BISHOP: 0, ROOK: 0, QUEEN: 0, KING: 0}
-        self.__black_takes = {PAWN: 0, KNIGHT: 0, BISHOP: 0, ROOK: 0, QUEEN: 0, KING: 0}
-
-        # Populates the piece dictionaries from the board
+        # Populates the piece dictionaries using the board
         for rIdx in range(8):
             for cIdx in range(8):
                 pos = self.__board[rIdx][cIdx]
@@ -151,12 +152,21 @@ class Board():
                     elif Piece.color(pos) == BLACK:
                         self.__black_pieces[Piece.name(pos)] += [[rIdx, cIdx]]
 
+        # True if the color can still castle on that side
+        self.__white_castle_left = True
+        self.__white_castle_right = True
+        self.__black_castle_left = True
+        self.__black_castle_right = True
+
+        # True of the color has castled
         self.__white_castled = False
         self.__black_castled = False
 
+        # The next color to move
         self.__current_move = WHITE
 
-    # Called when class instance is printed with print()
+
+    # Called when class instance is printed
     def __str__(self):
         print_board = "\n    0   1   2   3   4   5   6   7\n"
         print_board += "  " + "===="*8 + "==\n"
@@ -181,16 +191,24 @@ class Board():
     def board(self):
         return dcopy(self.__board)
 
-    def square(self, rIdx, cIdx):
-        return dcopy(self.__board[rIdx][cIdx])
+    # Make getter and setter methods for the square
+    def square(self, idx1, idx2=None):
+        if idx2 == None:
+            return self.__board[idx1[0]][idx1[1]]
+        else:
+            return self.__board[idx1][idx2]
+
     
+
     @property
     def white_pieces(self):
         return dcopy(self.__white_pieces)
 
+
     @property
     def black_pieces(self):
         return dcopy(self.__black_pieces)
+
 
     def find_position(self, color, name):
         """
@@ -201,17 +219,21 @@ class Board():
         elif color == BLACK:
             return dcopy(self.__black_pieces[name])
 
+
     @property
     def white_castled(self):
         return self.__white_castled
+
 
     @property
     def black_castled(self):
         return self.__black_castled
 
+
     @property
     def current_move(self):
         return self.__current_move
+
 
     @property
     def white_piece_value(self):
@@ -220,6 +242,7 @@ class Board():
         """
         return sum([Piece.value(piece) * len(pos) for piece, pos in self.__white_pieces.items()])
 
+
     @property
     def black_piece_value(self):
         """
@@ -227,14 +250,15 @@ class Board():
         """
         return sum([Piece.value(piece) * len(pos) for piece, pos in self.__black_pieces.items()])
 
+
     # This needs to be changed to something that checks for checkmate
     @property
     def winner(self):
         """
-        Returns the color of the winner is there is one, else it returns False 
+        Returns the color of the winner is there is one, else returns False 
         """
         if not self.find_position(WHITE, KING) and not self.find_pieces(BLACK, KING):
-            raise Error("Both kings are gone.")
+            raise ValueError("Both kings are gone.")
         elif not self.find_position(WHITE, KING):
             return BLACK
         elif not self.find_position(BLACK, KING):
@@ -242,74 +266,167 @@ class Board():
         else:
             return False
 
-    def make_move(self, start_idx, end_idx):
+
+    def make_move(self, start_pos, end_pos, debug=False):
         
         # Extract the row and column indexes for ease of use
-        start_rIdx = start_idx[0]
-        start_cIdx = start_idx[1]
-        end_rIdx = end_idx[0]
-        end_cIdx = end_idx[1]
+        start_rIdx = start_pos[0]
+        start_cIdx = start_pos[1]
+        end_rIdx = end_pos[0]
+        end_cIdx = end_pos[1]
 
         start_square = self.__board[start_rIdx][start_cIdx]
         end_square = self.__board[end_rIdx][end_cIdx]
 
-        print("\n=== ChessBoard.make_move({}, {}) ===".format(start_idx, end_idx))
+        if debug: print("\n=== ChessBoard.make_move({}, {}) ===".format(start_pos, end_pos))
 
+        # ValueError checking
         if start_square == EMPTY:
-            raise Error("The start square is empty.")
+            raise ValueError("The piece to move does not exist.")
         elif Piece.color(start_square) != self.__current_move:
-            raise Error("The piece is the wrong color.")
+            raise ValueError("The piece is the wrong color.")
+        elif end_square != EMPTY:
+            if Piece.color(end_square) == self.__current_move:
+                raise ValueError("Can not take piece of same color.")
 
-        # Extract piece data
         piece_name = Piece.name(start_square)
         piece_color = Piece.color(start_square)
 
-        print("\n=== Before move")
-        print("Start square:", start_square)
-        print("End square:", end_square)
-        print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
-        print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
-        
-        if end_square != EMPTY:
-            if end_square[COLOR] == self.__current_move:
-                raise Error("Can not take piece of same color.")
-            else:
-                # Extract data for piece being taken
-                take_name = end_square[NAME]
-                take_color = end_square[COLOR]
+        if debug:
+            print("\n=== Before move")
+            print("Start square:", start_square)
+            print("End square:", end_square)
+            print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
+            print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
 
-                self.__take_update(piece_color, piece_name, take_name, take_color, start_rIdx, start_cIdx, end_rIdx, end_cIdx)
-        else:
-            self.__move_update(piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx)
+        self.__update_board(piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx)
 
-        print("\n=== After move")
-        print("Start square:", start_square)
-        print("End square:", end_square)
-        print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
-        print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
+        # Logic for pawn promotion
+        if start_square == WHITE_PAWN and end_rIdx == 0:
+            self.__white_promote(end_pos)
+        elif start_square == BLACK_PAWN and end_rIdx == 7:
+            self.__black_promote(end_pos)
+        
+        # Logic for castling
+        elif not self.__white_castled and (self.__white_castle_left or self.__white_castle_right):
+            if start_square == WHITE_KING: 
+                if self.__white_castle_left and end_pos == [7, 1]:
+                    self.__white_castle([7, 0])
+                elif self.__white_castle_right and end_pos == [7, 5]:
+                    self.__white_castle([7, 7])
+                else:
+                    self.__white_castle_left = False
+                    self.__white_castle_right = False
 
-    def __move_update(self, piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
+            elif start_square == WHITE_ROOK:
+                if start_pos == [7, 0]:
+                    self.__white_castle_left = False
+                elif start_square == [7, 7]:
+                    self.__white_castle_right = False
+
+        elif not self.__black_castled and (self.__black_castle_left or self.__black_castle_right):            
+            if start_square == BLACK_KING:
+                if self.__black_castle_left and end_pos == [0, 2]:
+                    self.__black_castle([0, 0])
+                elif self._black_castle_right and end_pos == [0, 6]:
+                    self.__black_castle([0, 7])
+                else:
+                    self.__black_castle_left = False
+                    self.__black_castle_right = False
+
+            elif start_square == BLACK_ROOK:
+                if start_pos == [0, 0]:
+                    self.__black_castle_left = False
+                elif start_pos == [0, 7]:
+                    self.__black_castle_right = False
+
+        if debug:
+            print("\n=== After move")
+            print("Start square:", start_square)
+            print("End square:", end_square)
+            print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
+            print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
+
+
+    def __update_board(self, piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
         
-        if self.__current_move == WHITE:
-            # Update the pieces dictionary
-            idx = self.__white_pieces[piece_name].index([start_rIdx, start_cIdx])   # Finds the index of the position
-            self.__white_pieces[piece_name][idx] = [start_rIdx, start_cIdx]         # Sets the piece position to the new position
+        end_square = self.__board[end_rIdx][end_cIdx]
+
+        if piece_color == WHITE:
+            # Update the piece dictionary
+            idx = self.__white_pieces[piece_name].index([start_rIdx, start_cIdx])  # Finds the index of the position
+            self.__white_pieces[piece_name][idx] = [end_rIdx, end_cIdx]  # Sets the pieces position to the end position
+
+            # Logic for taking
+            if end_square != EMPTY:
+                take_name = Piece.name(end_square)
+                idx = self.__black_pieces[take_name].index([end_rIdx, end_cIdx])  # Finds the index of the position of the taken piece
+                del self.__black_pieces[take_name][idx]  # Removes the position of the taken piece
         
-        elif self.__current_move == BLACK:
-            # Update the pieces dictionary
-            idx = self.__black_pieces[piece_name].index([start_rIdx, start_cIdx])   # Finds the index of the position
-            self.__black_pieces[piece_name][idx] = [start_rIdx, start_cIdx]         # Sets the piece position to the new position
+        elif piece_color == BLACK:
+            # Update the piece dictionary
+            idx = self.__black_pieces[piece_name].index([start_rIdx, start_cIdx])  # Finds the index of the position
+            self.__black_pieces[piece_name][idx] = [end_rIdx, end_cIdx]  # Sets the pieces position to the end position
+
+            # Logic for taking
+            if end_square != EMPTY:
+                take_name = Piece.name(end_square)
+                idx = self.__white_pieces[take_name].index([end_rIdx, end_cIdx])  # Finds the index of the position of the taken piece
+                del self.__white_pieces[take_name][idx]  # Removes the position of the taken piece
 
         # Update the board
         self.__board[start_rIdx][start_cIdx] = EMPTY
-        self.__board[end_rIdx][end_cIdx] = Piece.create(piece_color, piece_name)          
-
-    def __take_update(self, piece_color, piece_name, take_name, take_type, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
-        pass
+        self.__board[end_rIdx][end_cIdx] = Piece.create(piece_color, piece_name)
 
 
+    def __white_castle(self, rook_start):
+        self.__white_castle_left = False
+        self.__white_castle_right = False
+        self.__white_castled = True
+        
+        if rook_start == [7, 0]:
+            rook_end = [7, 2]
+        elif rook_start == [7, 7]:
+            rook_end = [7, 4]
+
+        if self.__board[rook_end[0]][rook_end[1]] != EMPTY:
+            raise ValueError("White castling error: the rooks end position is occupied.")
+
+        self.__update_board(WHITE, ROOK, rook_start[0], rook_start[1], rook_end[0], rook_end[1])
 
 
+    def __black_castle(self, rook_start):
+        self.__black_castle_left = False
+        self.__black_castle_right = False
+        self.__black_castled = True
+
+        if rook_start == [0, 0]:
+            rook_end = [0, 3]
+        elif rook_start == [0, 7]:
+            rook_end = [0, 5]
+
+        if self.__board[rook_end[0]][rook_end[1]] != EMPTY:
+            raise ValueError("Black castling error: the rooks end position is occupied.")
+
+        self.__update_board(BLACK, ROOK, rook_start[0], rook_start[1], rook_end[0], rook_end[1])
+
+
+    def __white_promote(self, pawn_pos):
+        idx = self.__white_pieces[PAWN].index(pawn_pos) 
+        del self.__white_pieces[PAWN][idx]
+        self.__white_pieces[QUEEN] += [pawn_pos]
+        self.__board[pawn_pos[0]][pawn_pos[1]] = Piece.create(WHITE, QUEEN)
+
+
+    def __black_promote(self, pawn_pos):
+        idx = self.__black_pieces[PAWN].index(pawn_pos) 
+        del self.__black_pieces[PAWN][idx]
+        self.__black_pieces[QUEEN] += [pawn_pos]
+        self.__board[pawn_pos[0]][pawn_pos[1]] = Piece.create(BLACK, QUEEN)
+
+
+
+# This will not run if the file is imported.
 if __name__ == "__main__":
     CB = Board()
     print(CB)
@@ -318,5 +435,8 @@ if __name__ == "__main__":
     print(CB.white_piece_value)
     print(CB.black_piece_value)
     print(CB.winner)
-    CB.make_move([7, 0], [2, 0])
+    CB.make_move([7, 1], [5, 1])
+    CB.make_move([7, 2], [5, 2])
+    print(CB)
+    CB.make_move([7, 3], [7, 1])
     print(CB)
