@@ -153,10 +153,10 @@ class Board():
                         self.__black_pieces[Piece.name(pos)] += [[rIdx, cIdx]]
 
         # True if the color can still castle on that side
-        self.__white_castle_left = True
-        self.__white_castle_right = True
-        self.__black_castle_left = True
-        self.__black_castle_right = True
+        self.__white_can_castle_left = True
+        self.__white_can_castle_right = True
+        self.__black_can_castle_left = True
+        self.__black_can_castle_right = True
 
         # True of the color has castled
         self.__white_castled = False
@@ -308,37 +308,37 @@ class Board():
             self.__black_promote(end_pos)
         
         # Logic for castling
-        elif not self.__white_castled and (self.__white_castle_left or self.__white_castle_right):
+        elif not self.__white_castled and (self.__white_can_castle_left or self.__white_can_castle_right):
             if start_square == WHITE_KING: 
-                if self.__white_castle_left and end_pos == [7, 1]:
+                if self.__white_can_castle_left and end_pos == [7, 1]:
                     self.__white_castle([7, 0])
-                elif self.__white_castle_right and end_pos == [7, 5]:
+                elif self.__white_can_castle_right and end_pos == [7, 5]:
                     self.__white_castle([7, 7])
                 else:
-                    self.__white_castle_left = False
-                    self.__white_castle_right = False
+                    self.__white_can_castle_left = False
+                    self.__white_can_castle_right = False
 
             elif start_square == WHITE_ROOK:
                 if start_pos == [7, 0]:
-                    self.__white_castle_left = False
+                    self.__white_can_castle_left = False
                 elif start_square == [7, 7]:
-                    self.__white_castle_right = False
+                    self.__white_can_castle_right = False
 
-        elif not self.__black_castled and (self.__black_castle_left or self.__black_castle_right):            
+        elif not self.__black_castled and (self.__black_can_castle_left or self.__black_can_castle_right):            
             if start_square == BLACK_KING:
-                if self.__black_castle_left and end_pos == [0, 2]:
+                if self.__black_can_castle_left and end_pos == [0, 2]:
                     self.__black_castle([0, 0])
                 elif self._black_castle_right and end_pos == [0, 6]:
                     self.__black_castle([0, 7])
                 else:
-                    self.__black_castle_left = False
-                    self.__black_castle_right = False
+                    self.__black_can_castle_left = False
+                    self.__black_can_castle_right = False
 
             elif start_square == BLACK_ROOK:
                 if start_pos == [0, 0]:
-                    self.__black_castle_left = False
+                    self.__black_can_castle_left = False
                 elif start_pos == [0, 7]:
-                    self.__black_castle_right = False
+                    self.__black_can_castle_right = False
 
         if debug:
             print("\n=== After move")
@@ -380,8 +380,8 @@ class Board():
 
 
     def __white_castle(self, rook_start):
-        self.__white_castle_left = False
-        self.__white_castle_right = False
+        self.__white_can_castle_left = False
+        self.__white_can_castle_right = False
         self.__white_castled = True
         
         if rook_start == [7, 0]:
@@ -396,8 +396,8 @@ class Board():
 
 
     def __black_castle(self, rook_start):
-        self.__black_castle_left = False
-        self.__black_castle_right = False
+        self.__black_can_castle_left = False
+        self.__black_can_castle_right = False
         self.__black_castled = True
 
         if rook_start == [0, 0]:
