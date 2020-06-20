@@ -1,6 +1,26 @@
 from copy import deepcopy as dcopy
 
-# Constants 
+# Constants
+NORTH = "NORTH"
+SOUTH = "SOUTH"
+WEST = "WEST"
+EAST = "EAST"
+
+NORTH_WEST = "NORTH_WEST" 
+NORTH_EAST = "NORTH_EAST"
+SOUTH_WEST = "SOUTH_WEST"
+SOUTH_EAST = "SOUTH_EAST"
+
+# For Knight 
+UP_RIGHT = "UP_RIGHT"
+UP_LEFT = "UP_LEFT"
+DOWN_RIGHT = "DOWN_RIGHT"
+DOWN_LEFT = "DOWN_LEFT"
+RIGHT_UP = "RIGHT_UP"
+RIGHT_DOWN = "RIGHT_DOWN"
+LEFT_UP = "LEFT_UP"
+LEFT_DOWN = "LEFT_DOWN"
+
 COLOR = "COLOR"
 NAME = "NAME"
 
@@ -37,49 +57,10 @@ WHITE_PIECES = [WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN,
 BLACK_PIECES = [BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING]
 
 # Piece data
-PIECE_DATA = {
-    WHITE_PAWN:     {COLOR: WHITE, NAME: PAWN}, 
-    WHITE_ROOK:     {COLOR: WHITE, NAME: ROOK}, 
-    WHITE_KNIGHT:   {COLOR: WHITE, NAME: KNIGHT}, 
-    WHITE_BISHOP:   {COLOR: WHITE, NAME: BISHOP}, 
-    WHITE_QUEEN:    {COLOR: WHITE, NAME: QUEEN}, 
-    WHITE_KING:     {COLOR: WHITE, NAME: KING},
 
-    BLACK_PAWN:     {COLOR: BLACK, NAME: PAWN}, 
-    BLACK_ROOK:     {COLOR: BLACK, NAME: ROOK}, 
-    BLACK_KNIGHT:   {COLOR: BLACK, NAME: KNIGHT}, 
-    BLACK_BISHOP:   {COLOR: BLACK, NAME: BISHOP}, 
-    BLACK_QUEEN:    {COLOR: BLACK, NAME: QUEEN}, 
-    BLACK_KING:     {COLOR: BLACK, NAME: KING}
-}
 
 # Piece creator
-CREATE_PIECE = {
-    WHITE: {
-        PAWN: WHITE_PAWN, 
-        ROOK: WHITE_ROOK, 
-        KNIGHT: WHITE_KNIGHT, 
-        BISHOP: WHITE_BISHOP, 
-        QUEEN: WHITE_QUEEN, 
-        KING: WHITE_KING
-    }, 
 
-    BLACK: {
-        PAWN: BLACK_PAWN, 
-        ROOK: BLACK_ROOK, 
-        KNIGHT: BLACK_KNIGHT, 
-        BISHOP: BLACK_BISHOP, 
-        QUEEN: BLACK_QUEEN, 
-        KING: BLACK_KING
-    }
-}
-
-PIECE_VALUE = {PAWN: 1, BISHOP: 3, KNIGHT: 3.5, ROOK: 5, QUEEN: 10, KING: 0} # what do we do for the KINGs value? 
-
-# For converting list index and chess boards index
-# Todo: is this correct?
-NUMBER_TO_LETTER = {n: "hgfedcba"[n] for n in range(8)}
-LETTER_TO_NUMBER = {"hgfedcba"[n]: n for n in range(8)}
 
 
 class Piece():
@@ -89,29 +70,111 @@ class Piece():
     For example to get a pieces color use: Piece.color(piece)   
     """
     # Chess piece helper functions
+    DATA = {
+        WHITE_PAWN:     {COLOR: WHITE, NAME: PAWN}, 
+        WHITE_ROOK:     {COLOR: WHITE, NAME: ROOK}, 
+        WHITE_KNIGHT:   {COLOR: WHITE, NAME: KNIGHT}, 
+        WHITE_BISHOP:   {COLOR: WHITE, NAME: BISHOP}, 
+        WHITE_QUEEN:    {COLOR: WHITE, NAME: QUEEN}, 
+        WHITE_KING:     {COLOR: WHITE, NAME: KING},
+
+        BLACK_PAWN:     {COLOR: BLACK, NAME: PAWN}, 
+        BLACK_ROOK:     {COLOR: BLACK, NAME: ROOK}, 
+        BLACK_KNIGHT:   {COLOR: BLACK, NAME: KNIGHT}, 
+        BLACK_BISHOP:   {COLOR: BLACK, NAME: BISHOP}, 
+        BLACK_QUEEN:    {COLOR: BLACK, NAME: QUEEN}, 
+        BLACK_KING:     {COLOR: BLACK, NAME: KING}
+    }
+
+    CREATE = {
+        WHITE: {
+            PAWN:   WHITE_PAWN, 
+            ROOK:   WHITE_ROOK, 
+            KNIGHT: WHITE_KNIGHT, 
+            BISHOP: WHITE_BISHOP, 
+            QUEEN:  WHITE_QUEEN, 
+            KING:   WHITE_KING
+        }, 
+
+        BLACK: {
+            PAWN:   BLACK_PAWN, 
+            ROOK:   BLACK_ROOK, 
+            KNIGHT: BLACK_KNIGHT, 
+            BISHOP: BLACK_BISHOP, 
+            QUEEN:  BLACK_QUEEN, 
+            KING:   BLACK_KING
+        }
+    }
+
+    DIRECTIONS = {
+        NORTH: (-1, 0),
+        SOUTH: (1, 0),
+        EAST: (0, 1),
+        WEST: (0, -1),
+        NORTH_EAST: (-1, 1),
+        NORTH_WEST: (-1, -1),
+        SOUTH_EAST: (1, 1),
+        SOUTH_WEST: (1, -1),
+        # for knight
+        UP_LEFT: (-2, -1),
+        UP_RIGHT: (-2, 1),
+        DOWN_LEFT: (2, -1),
+        DOWN_RIGHT: (2, 1),
+        LEFT_UP: (-1, -2),
+        LEFT_DOWN: (1, -2),
+        RIGHT_UP: (-1, 2),
+        RIGHT_DOWN: (1, 2)
+    }
+
+    MOVEMENT = {
+        PAWN: {WHITE: (NORTH, NORTH_EAST, NORTH_WEST), BLACK: (SOUTH, SOUTH_WEST, SOUTH_EAST)},
+        KNIGHT: (UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, LEFT_UP, LEFT_DOWN, RIGHT_UP, RIGHT_DOWN),
+        BISHOP: (NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST),
+        ROOK: (NORTH, SOUTH, WEST, EAST),
+        QUEEN: (NORTH, SOUTH, WEST, EAST, NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST),
+        KING: (NORTH, SOUTH, WEST, EAST, NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST)
+    }
+
+    VALUE = {PAWN: 1, BISHOP: 3, KNIGHT: 3.5, ROOK: 5, QUEEN: 10, KING: 0} # what do we do for the KINGs value? 
+
     @staticmethod
     def color(piece):
-        return PIECE_DATA[piece][COLOR]
+        return Piece.DATA[piece][COLOR]
 
 
     @staticmethod
     def name(piece):
-        return PIECE_DATA[piece][NAME]
+        return Piece.DATA[piece][NAME]
 
 
     @staticmethod
     def data(piece):
-        return 
+        return Piece.DATA[piece]
 
 
     @staticmethod
     def create(color, name):
-        return CREATE_PIECE[color][name]
+        return Piece.CREATE[color][name]
 
 
     @staticmethod
     def value(piece):
-        return PIECE_VALUE[piece]
+        return Piece.VALUE[piece]
+
+
+    @staticmethod
+    def movment(piece):
+        name = Piece.name(piece)
+        if name == PAWN:
+            color = Piece.color(piece)
+            return Piece.MOVEMENT[name][color]
+        else:
+            return Piece.MOVEMENT[name]
+
+
+    @staticmethod
+    def directions(direct):
+        return DIRECTIONS[direct]
 
 
     @staticmethod
@@ -198,7 +261,6 @@ class Board():
         else:
             return self.__board[idx1][idx2]
 
-    
 
     @property
     def white_pieces(self):
@@ -267,7 +329,23 @@ class Board():
             return False
 
 
-    def make_move(self, start_pos, end_pos, debug=False):
+    def remove_piece(self, pos):
+        square = self.__board[pos[0]][pos[1]]
+        color = Piece.color(square)
+        name = Piece.name(square)
+
+        if color == WHITE:
+            idx = self.__white_pieces[name].index(pos)
+            del self.__white_pieces[name][idx]
+        elif color == BLACK:
+            idx = self.__black_pieces[name].index(pos)
+            del self.__black_pieces[name][idx]
+
+        self.__board[pos[0]][pos[1]] = EMPTY
+
+
+
+    def move(self, start_pos, end_pos, debug=False):
         
         # Extract the row and column indexes for ease of use
         start_rIdx = start_pos[0]
@@ -299,7 +377,7 @@ class Board():
             print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
             print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
 
-        self.__update_board(piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx)
+        self.__update_board(start_pos, end_pos)
 
         # Logic for pawn promotion
         if start_square == WHITE_PAWN and end_rIdx == 0:
@@ -348,30 +426,43 @@ class Board():
             print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
 
 
-    def __update_board(self, piece_color, piece_name, start_rIdx, start_cIdx, end_rIdx, end_cIdx):
+    def __update_board(self, start_pos, end_pos):
+
+        start_rIdx = start_pos[0]
+        start_cIdx = start_pos[1]
+        end_rIdx = end_pos[0]
+        end_cIdx = end_pos[1]
         
         end_square = self.__board[end_rIdx][end_cIdx]
+        start_square = self.__board[start_rIdx][start_cIdx]
+
+        piece_color = Piece.color(start_square)
+        piece_name = Piece.name(start_square)
 
         if piece_color == WHITE:
             # Update the piece dictionary
-            idx = self.__white_pieces[piece_name].index([start_rIdx, start_cIdx])  # Finds the index of the position
-            self.__white_pieces[piece_name][idx] = [end_rIdx, end_cIdx]  # Sets the pieces position to the end position
+            idx = self.__white_pieces[piece_name].index(start_pos)  # Finds the index of the position
+            self.__white_pieces[piece_name][idx] = end_pos  # Sets the pieces position to the end position
 
             # Logic for taking
-            if end_square != EMPTY:
+            if end_square != EMPTY and Piece.color(end_square) != piece_color:
+                if Piece.color(end_square) == piece_color:
+                    raise ValueError("Cannot take piece of same color")
                 take_name = Piece.name(end_square)
                 idx = self.__black_pieces[take_name].index([end_rIdx, end_cIdx])  # Finds the index of the position of the taken piece
                 del self.__black_pieces[take_name][idx]  # Removes the position of the taken piece
         
         elif piece_color == BLACK:
             # Update the piece dictionary
-            idx = self.__black_pieces[piece_name].index([start_rIdx, start_cIdx])  # Finds the index of the position
-            self.__black_pieces[piece_name][idx] = [end_rIdx, end_cIdx]  # Sets the pieces position to the end position
+            idx = self.__black_pieces[piece_name].index(start_pos)  # Finds the index of the position
+            self.__black_pieces[piece_name][idx] = end_pos  # Sets the pieces position to the end position
 
             # Logic for taking
             if end_square != EMPTY:
+                if Piece.color(end_square) == piece_color:
+                    raise ValueError("Cannot take piece of same color")
                 take_name = Piece.name(end_square)
-                idx = self.__white_pieces[take_name].index([end_rIdx, end_cIdx])  # Finds the index of the position of the taken piece
+                idx = self.__white_pieces[take_name].index(end_pos)  # Finds the index of the position of the taken piece
                 del self.__white_pieces[take_name][idx]  # Removes the position of the taken piece
 
         # Update the board
@@ -392,7 +483,7 @@ class Board():
         if self.__board[rook_end[0]][rook_end[1]] != EMPTY:
             raise ValueError("White castling error: the rooks end position is occupied.")
 
-        self.__update_board(WHITE, ROOK, rook_start[0], rook_start[1], rook_end[0], rook_end[1])
+        self.__update_board(rook_start, rook_end)
 
 
     def __black_castle(self, rook_start):
@@ -408,7 +499,7 @@ class Board():
         if self.__board[rook_end[0]][rook_end[1]] != EMPTY:
             raise ValueError("Black castling error: the rooks end position is occupied.")
 
-        self.__update_board(BLACK, ROOK, rook_start[0], rook_start[1], rook_end[0], rook_end[1])
+        self.__update_board(rook_start, rook_end)
 
 
     def __white_promote(self, pawn_pos):
@@ -435,8 +526,10 @@ if __name__ == "__main__":
     print(CB.white_piece_value)
     print(CB.black_piece_value)
     print(CB.winner)
-    CB.make_move([7, 1], [5, 1])
-    CB.make_move([7, 2], [5, 2])
+    CB.move([7, 1], [5, 1])
+    CB.move([7, 2], [5, 2])
     print(CB)
-    CB.make_move([7, 3], [7, 1])
+    CB.move([7, 3], [7, 1])
+    print(CB)
+    CB.move([6, 0], [0, 0])
     print(CB)
