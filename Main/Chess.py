@@ -1,6 +1,8 @@
 from copy import deepcopy as dcopy
 
 # Constants
+
+# Movement directions
 NORTH = "NORTH"
 SOUTH = "SOUTH"
 WEST = "WEST"
@@ -52,9 +54,7 @@ BLACK_QUEEN = "BLACK_QUEEN"
 BLACK_KING = "BLACK_KING"
 
 # Might not need these
-PIECE_NAMES = [PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING]
-WHITE_PIECES = [WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING]
-BLACK_PIECES = [BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING]
+
 
 # Piece data
 
@@ -67,7 +67,7 @@ class Piece():
     """
     This class is just a namespace for methods relating to chess pieces.
 
-    For example to get a pieces color use: Piece.color(piece)   
+    For example to get a pieces color use: Piece.color_of(piece)   
     """
     # Chess piece helper functions
     DATA = {
@@ -137,18 +137,56 @@ class Piece():
 
     VALUE = {PAWN: 1, BISHOP: 3, KNIGHT: 3.5, ROOK: 5, QUEEN: 10, KING: 0} # what do we do for the KINGs value? 
 
+    COLORS = (WHITE, BLACK)
+    NAMES = (PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING)
+    PIECES = (
+        WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING,
+        BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING
+    )
+    WHITE_PIECES = (WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING)
+    BLACK_PIECES = (BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING)
+
     @staticmethod
-    def color(piece):
+    @property
+    def names():
+        return Piece.NAMES
+
+    @staticmethod
+    @property
+    def color():
+        return Piece.COLORS
+
+
+    @staticmethod
+    @property
+    def white():
+        return dcopy(Piece.WHITE_PIECES)
+
+
+    @staticmethod
+    @property
+    def black():
+        return Piece.BLACK_PIECES
+
+
+    @staticmethod
+    @property
+    def all():
+        return Piece.PIECES
+
+
+    @staticmethod
+    def color_of(piece):
         return Piece.DATA[piece][COLOR]
 
 
     @staticmethod
-    def name(piece):
+    def name_of(piece):
         return Piece.DATA[piece][NAME]
 
 
     @staticmethod
-    def data(piece):
+    def data_of(piece):
         return Piece.DATA[piece]
 
 
@@ -158,31 +196,30 @@ class Piece():
 
 
     @staticmethod
-    def value(piece):
-        return Piece.VALUE[piece]
+    def value_of(piece):
+        return  Piece.VALUE[Piece.name_of(piece)]
 
 
     @staticmethod
-    def movment(piece):
-        name = Piece.name(piece)
+    def movement_of(piece):
+        name = Piece.color_of(piece)
         if name == PAWN:
-            color = Piece.color(piece)
             return Piece.MOVEMENT[name][color]
         else:
             return Piece.MOVEMENT[name]
 
 
     @staticmethod
-    def directions(direct):
+    def directions_of(direct):
         return DIRECTIONS[direct]
 
 
     @staticmethod
-    def piece_format(piece):  
-        if Piece.name(piece) == KNIGHT:
-            return Piece.color(piece)[0] + Piece.name(piece)[1] 
+    def format(piece):  
+        if Piece.name_of(piece) == KNIGHT:
+            return Piece.color_of(piece)[0] + Piece.name_of(piece)[1] 
         else: 
-            return Piece.color(piece)[0] + Piece.name(piece)[0]
+            return Piece.color_of(piece)[0] + Piece.name_of(piece)[0]
 
 
 class Board():
@@ -201,19 +238,28 @@ class Board():
             [WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_KING, WHITE_QUEEN, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK]
         ]
 
-        # Piece dictionaries
+        # Piece dictionaries, phase these out in favor of self.__pieces
         self.__white_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []} 
         self.__black_pieces = {PAWN: [], KNIGHT: [], BISHOP: [], ROOK: [], QUEEN: [], KING: []}
+
+        self.__pieces = {
+            WHITE_PAWN: [], WHITE_ROOK: [], WHITE_KNIGHT: [], WHITE_BISHOP: [], WHITE_KING: [], 
+            WHITE_QUEEN: [], WHITE_BISHOP: [], WHITE_KNIGHT: [], WHITE_ROOK: [],
+
+            BLACK_PAWN: [], BLACK_ROOK: [], BLACK_KNIGHT: [], BLACK_BISHOP: [], BLACK_KING: [], 
+            BLACK_QUEEN: [], BLACK_BISHOP: [], BLACK_KNIGHT: [], BLACK_ROOK: []
+        }
 
         # Populates the piece dictionaries using the board
         for rIdx in range(8):
             for cIdx in range(8):
-                pos = self.__board[rIdx][cIdx]
-                if pos != EMPTY:
-                    if Piece.color(pos) == WHITE:
-                        self.__white_pieces[Piece.name(pos)] += [[rIdx, cIdx]]
-                    elif Piece.color(pos) == BLACK:
-                        self.__black_pieces[Piece.name(pos)] += [[rIdx, cIdx]]
+                square = self.__board[rIdx][cIdx]
+                if square != EMPTY:
+                    self.__pieces[square] += [[rIdx, cIdx]]
+                    if Piece.color_of(square) == WHITE:
+                        self.__white_pieces[Piece.name_of(square)] += [[rIdx, cIdx]]
+                    elif Piece.color_of(square) == BLACK:
+                        self.__black_pieces[Piece.name_of(square)] += [[rIdx, cIdx]]
 
         # True if the color can still castle on that side
         self.__white_can_castle_left = True
@@ -240,7 +286,7 @@ class Board():
                 if pos == EMPTY:
                     print_board += " -- "
                 else:
-                    print_board += " " + Piece.piece_format(pos) + " "
+                    print_board += " " + Piece.format(pos) + " "
             print_board += "| " + str(8+rIdx) + "\n"
 
         print_board += "  " + "===="*8 + "==\n"
@@ -264,22 +310,24 @@ class Board():
 
     @property
     def white_pieces(self):
-        return dcopy(self.__white_pieces)
+        return {Piece.name_of(piece): self.__pieces[piece] for piece in Piece.white}
 
 
     @property
     def black_pieces(self):
         return dcopy(self.__black_pieces)
 
+    @property
+    def pieces(self):
+        return dcopy(self.__pieces)
+    
 
-    def find_position(self, color, name):
+
+    def find_position(self, piece):
         """
         Returns a list of positions for the pieces with COLOR: color and NAME: name
         """
-        if color == WHITE:
-            return dcopy(self.__white_pieces[name])
-        elif color == BLACK:
-            return dcopy(self.__black_pieces[name])
+        return self.__pieces[piece]
 
 
     @property
@@ -302,7 +350,7 @@ class Board():
         """
         Returns the total value of the white pieces in the dict self.__white_pieces
         """
-        return sum([Piece.value(piece) * len(pos) for piece, pos in self.__white_pieces.items()])
+        return sum([Piece.value_of(piece) * len(pos) for piece, pos in self.__white_pieces.items()])
 
 
     @property
@@ -310,7 +358,7 @@ class Board():
         """
         Returns the total value of the black pieces in the dict self.__black_pieces
         """
-        return sum([Piece.value(piece) * len(pos) for piece, pos in self.__black_pieces.items()])
+        return sum([Piece.value_of(piece) * len(pos) for piece, pos in self.__black_pieces.items()])
 
 
     # This needs to be changed to something that checks for checkmate
@@ -331,8 +379,8 @@ class Board():
 
     def remove_piece(self, pos):
         square = self.__board[pos[0]][pos[1]]
-        color = Piece.color(square)
-        name = Piece.name(square)
+        color = Piece.color_of(square)
+        name = Piece.name_of(square)
 
         if color == WHITE:
             idx = self.__white_pieces[name].index(pos)
@@ -361,14 +409,14 @@ class Board():
         # ValueError checking
         if start_square == EMPTY:
             raise ValueError("The piece to move does not exist.")
-        elif Piece.color(start_square) != self.__current_move:
+        elif Piece.color_of(start_square) != self.__current_move:
             raise ValueError("The piece is the wrong color.")
         elif end_square != EMPTY:
-            if Piece.color(end_square) == self.__current_move:
+            if Piece.color_of(end_square) == self.__current_move:
                 raise ValueError("Can not take piece of same color.")
 
-        piece_name = Piece.name(start_square)
-        piece_color = Piece.color(start_square)
+        piece_name = Piece.name_of(start_square)
+        piece_color = Piece.color_of(start_square)
 
         if debug:
             print("\n=== Before move")
@@ -436,8 +484,8 @@ class Board():
         end_square = self.__board[end_rIdx][end_cIdx]
         start_square = self.__board[start_rIdx][start_cIdx]
 
-        piece_color = Piece.color(start_square)
-        piece_name = Piece.name(start_square)
+        piece_color = Piece.color_of(start_square)
+        piece_name = Piece.name_of(start_square)
 
         if piece_color == WHITE:
             # Update the piece dictionary
@@ -445,10 +493,10 @@ class Board():
             self.__white_pieces[piece_name][idx] = end_pos  # Sets the pieces position to the end position
 
             # Logic for taking
-            if end_square != EMPTY and Piece.color(end_square) != piece_color:
-                if Piece.color(end_square) == piece_color:
+            if end_square != EMPTY and Piece.color_of(end_square) != piece_color:
+                if Piece.color_of(end_square) == piece_color:
                     raise ValueError("Cannot take piece of same color")
-                take_name = Piece.name(end_square)
+                take_name = Piece.name_of(end_square)
                 idx = self.__black_pieces[take_name].index([end_rIdx, end_cIdx])  # Finds the index of the position of the taken piece
                 del self.__black_pieces[take_name][idx]  # Removes the position of the taken piece
         
@@ -459,9 +507,9 @@ class Board():
 
             # Logic for taking
             if end_square != EMPTY:
-                if Piece.color(end_square) == piece_color:
+                if Piece.color_of(end_square) == piece_color:
                     raise ValueError("Cannot take piece of same color")
-                take_name = Piece.name(end_square)
+                take_name = Piece.name_of(end_square)
                 idx = self.__white_pieces[take_name].index(end_pos)  # Finds the index of the position of the taken piece
                 del self.__white_pieces[take_name][idx]  # Removes the position of the taken piece
 
@@ -523,6 +571,7 @@ if __name__ == "__main__":
     print(CB)
     print("White pieces:", CB.white_pieces, "\n")
     print("Black pieces:", CB.black_pieces, "\n")
+    print("Pieces:", CB.pieces, "\n")
     print(CB.white_piece_value)
     print(CB.black_piece_value)
     print(CB.winner)
