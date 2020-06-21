@@ -54,7 +54,7 @@ BLACK_QUEEN = "BLACK_QUEEN"
 BLACK_KING = "BLACK_KING"
 
 # Might not need these
-
+        
 
 # Piece data
 
@@ -390,7 +390,6 @@ class Board():
             del self.__black_pieces[name][idx]
 
         self.__board[pos[0]][pos[1]] = EMPTY
-
 
 
     def move(self, start_pos, end_pos, debug=False):
