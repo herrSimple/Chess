@@ -15,6 +15,7 @@ SOUTH_EAST = "SOUTH_EAST"
 
 # For Knight 
 UP_RIGHT = "UP_RIGHT"
+
 UP_LEFT = "UP_LEFT"
 DOWN_RIGHT = "DOWN_RIGHT"
 DOWN_LEFT = "DOWN_LEFT"
@@ -61,9 +62,7 @@ BLACK_KING = "BLACK_KING"
 
 # Piece creator
 
-
-
-class Piece():
+class Piece():  
     """
     This class is just a namespace for methods relating to chess pieces.
 
@@ -273,6 +272,8 @@ class Board():
 
         # The next color to move
         self.__current_move = WHITE
+
+
 
 
     # Called when class instance is printed
