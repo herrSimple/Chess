@@ -145,15 +145,16 @@ class Piece():
     WHITE_PIECES = (WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING)
     BLACK_PIECES = (BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING)
 
-    @staticmethod
+
     @property
     def names():
         return Piece.NAMES
 
+
     @staticmethod
     @property
-    def color():
-        return Piece.COLORS
+    def colors():
+        return (Piece.COLORS)
 
 
     @staticmethod
@@ -272,7 +273,6 @@ class Board():
 
         # The next color to move
         self.__current_move = WHITE
-
 
 
 
