@@ -148,7 +148,10 @@ class ChessPieceHandler():
     # }
 
     DIRECTIONS = {
-        PAWN: {WHITE: (NORTH, NORTH_EAST, NORTH_WEST), BLACK: (SOUTH, SOUTH_WEST, SOUTH_EAST)},
+        PAWN: {
+            WHITE: (NORTH, NORTH_EAST, NORTH_WEST), 
+            BLACK: (SOUTH, SOUTH_WEST, SOUTH_EAST)
+        },
         KNIGHT: (UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, LEFT_UP, LEFT_DOWN, RIGHT_UP, RIGHT_DOWN),
         BISHOP: (NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST),
         ROOK: (NORTH, SOUTH, WEST, EAST),
@@ -243,11 +246,12 @@ class ChessPieceHandler():
         return  self.VALUE[self.name_of(piece)]
 
 
-    def directions_of(piece):
+    def directions_of(self, piece):
         """
         Returns the movement directions of piece.
         """
-        name = self.color_of(piece)
+        color = self.color_of(piece)
+        name = self.name_of(piece)
         if name == PAWN:
             return self.DIRECTIONS[name][color]
         else:
@@ -277,9 +281,9 @@ class ChessPieceHandler():
 
 class ChessBoard():
     # Called when creating class instance 
-    def __init__(self):
+    def __init__(self, piece_handler_obj):
 
-        self.__PiecesCls = ChessPieceHandler()
+        self.__PiecesCls = piece_handler_obj
 
         # Board creator, is this the correct setup? Should this even be here?
         self.__board = [
@@ -347,7 +351,6 @@ class ChessBoard():
     @property
     def board(self):
         return dcopy(self.__board)
-
 
 
     # Make getter and setter methods for the square
@@ -443,7 +446,8 @@ class ChessBoard():
 
 
     def is_on_board(self, pos):
-        return 7 >= pos[0] > 0 and 7 >= pos[1] > 0
+        # print("In is on board\n", "Pos:", pos, "On board:", (7 >= pos[0] >= 0 and 7 >= pos[1] >= 0))
+        return 7 >= pos[0] >= 0 and 7 >= pos[1] >= 0
 
 
     def __add_piece(self, piece, pos):
@@ -525,45 +529,144 @@ class ChessBoard():
 
 
     def __get_pawn_moves(self, pos):
+        """
+        Looks like it is working
+        """
         piece = self.get_piece(pos)
         color = self.__PiecesCls.color_of(piece)
-
+        moves = []
         directions = self.__PiecesCls.directions_of(piece)
 
-        for rDir, cDir in directions:
+        # Logic for pawns first move
+        if color == WHITE and pos[0] == 6:  # Is the white pawn on its starting row
+            if self.__board[pos[0] - 1][pos[1]] == EMPTY and self.__board[pos[0] - 2][pos[1]] == EMPTY:
+                moves.append([pos[0] - 2, pos[1]])
+        elif color == BLACK and pos[0] == 1:  # Is the black pawn on its starting row
+            if self.__board[pos[0] + 1][pos[1]] == EMPTY and self.__board[pos[0] + 2][pos[1]] == EMPTY:
+                moves.append([pos[0] + 2, pos[1]])
+
+        # Iterate of the pieces movement directions 
+        for direct in directions:
+            rDir, cDir = direct  # Unpack the row and col directions
             move_pos = [pos[0] + rDir, pos[1] + cDir]
+            # Is move_pos a valid pos on the board
             if self.is_on_board(move_pos):
                 move_square = self.get_square(move_pos)
-                if move_square != EMPTY:
-                    if not self.__PiecesCls.are_same_color(piece, move_square):
-                        pass
 
+                # If the pawn is moving forward it can't take
+                if direct == NORTH or direct == SOUTH:
+                    if move_square == EMPTY:
+                        moves.append(move_pos)
 
-
+                # Pawn can take to left or right
+                else:
+                    if move_square != EMPTY:
+                        if not self.__PiecesCls.are_same_color(piece, move_square):
+                            moves.append(move_pos)
+        return moves
 
 
     def __get_knight_moves(self, pos):
-        pass
+        """
+        Seems to be working
+        """
+        piece = self.get_piece(pos)
+        color = self.__PiecesCls.color_of(piece)
+        moves = []
+        directions = self.__PiecesCls.directions_of(piece)
+
+        for offset in directions:
+            rOffset, cOffset = offset
+            move_pos = [pos[0] + rOffset, pos[1] + cOffset]
+
+            if self.is_on_board(move_pos):
+                move_square = self.get_square(move_pos)
+                if move_square == EMPTY:
+                    moves.append(move_pos)
+                else:
+                    if not self.__PiecesCls.are_same_color(piece, move_square):
+                        moves.append(move_pos)
+
+        return moves
 
 
     def __get_king_moves(self, pos):
-        pass
+        piece = self.get_piece(pos)
+        color = self.__PiecesCls.color_of(piece)
+        moves = []
+        directions = self.__PiecesCls.directions_of(piece)
+
+        # Logic for castling, check position, maybe use propertys for the if-checking
+        if color == WHITE and pos[0] == 7 and pos[1] == 3:
+            if self.__white_can_castle_left:
+                if self.get_square([7, 1]) == EMPTY and self.get_square([7, 2]) == EMPTY:
+                    moves.append([7, 1])
+
+            if self.__white_can_castle_right:
+                if self.get_square([7, 4]) == EMPTY and self.get_square([7, 5]) == EMPTY and self.get_square([7, 6]) == EMPTY:
+                    moves.append([7, 5])
+
+        elif color == BLACK and pos[0] == 0 and pos[1] == 4:
+            if self.__black_can_castle_left:
+                if self.get_square([0, 1]) == EMPTY and self.get_square([0, 2]) == EMPTY and self.get_square([0, 4]) == EMPTY:
+                    moves.append([0, 2])
+
+            if self.__black_can_castle_right:
+                if self.get_square([0, 5]) == EMPTY and self.get_square([0, 6]) == EMPTY:
+                    moves.append([0, 6])
+
+        for direct in directions:
+            rDir, cDir = direct
+            move_pos = [pos[0] + rDir, pos[1] + cDir]
+
+            if self.is_on_board(move_pos):
+                move_square = self.get_square(move_pos)
+                if move_square == EMPTY:
+                    moves.append(move_pos)
+                else:
+                    if not self.__PiecesCls.are_same_color(piece, move_square):
+                        moves.append(move_pos)
+
+        return moves
 
 
     def __get_normal_moves(self, pos):
-        pass
-
-
-    def get_moves(self, pos):
         piece = self.get_piece(pos)
-        name = self.__PiecesCls.name_of(piece)
+        color = self.__PiecesCls.color_of(piece)
+        moves = []
+        directions = self.__PiecesCls.directions_of(piece)
+
+        for direct in directions:
+            rDir, cDir = direct
+            move_pos = [pos[0] + rDir, pos[1] + cDir]
+            while True:
+                if self.is_on_board(move_pos):
+                    move_square = self.get_square(move_pos)
+                    if move_square == EMPTY:
+                        moves.append(move_pos)
+                    else:
+                        if not self.__PiecesCls.are_same_color(piece, move_square):
+                            moves.append(move_pos)
+                            break
+                        else:
+                            break
+                else:
+                    break
+
+                move_pos = [move_pos[0] + rDir, move_pos[1] + cDir]
+
+        return moves
+
+                
+    def get_moves(self, pos):
+        name = self.__PiecesCls.name_of(self.get_piece(pos))
 
         if name == PAWN:
             return self.__get_pawn_moves(pos)
         elif name == KNIGHT:
             return self.__get_knight_moves(pos)
         elif name == KING:
-            return __get_king_moves(pos)
+            return self.__get_king_moves(pos)
         else:
             return self.__get_normal_moves(pos)
 
@@ -653,14 +756,25 @@ class ChessBoard():
 
 # This will not run if the file is imported.
 if __name__ == "__main__":
-    Board = ChessBoard()
+    PieceHandler = ChessPieceHandler()
+    Board = ChessBoard(PieceHandler)
     print("Piece names:", ChessPieceHandler().names)
     print("Piece colors:", ChessPieceHandler().colors)
 
     print(Board)
-    print("White pieces:", Board.white_pieces, "\n")
+    print("Moves of white pawn at [6, 0]:", Board.get_moves([6, 0]))
+    print("Moves of black pawn at [1, 0]:", Board.get_moves([1, 0]))
+    print("Moves of white knight at [7, 1]:", Board.get_moves([7, 1]))
+    print("Moves of white knight at [7, 6]:", Board.get_moves([7, 6]))
+    print("Moves of black knight at [0, 1]:", Board.get_moves([0, 1]))
+    print("Moves of black knight at [0, 6]:", Board.get_moves([0, 6]))
+    print("\nWhite pieces:", Board.white_pieces, "\n")
     print("Black pieces:", Board.black_pieces, "\n")
     print("Pieces:", Board.pieces, "\n")
+
+    for piece, positions in Board.pieces.items():
+        for pos in positions:
+            print("Piece:", piece, "At:", pos, "Moves:", Board.get_moves(pos))
 
     print(Board.white_piece_value)
     print(Board.black_piece_value)
@@ -672,3 +786,12 @@ if __name__ == "__main__":
     print(Board)
     Board.move_piece([6, 0], [0, 0])
     print(Board)
+
+    for piece, positions in Board.pieces.items():
+        for pos in positions:
+            print("Piece:", piece, "At:", pos, "Moves:", Board.get_moves(pos))
+
+    # for _ in range(10000):
+    #     for piece, positions in Board.pieces.items():
+    #         for pos in positions:
+    #             Board.get_moves(pos)
