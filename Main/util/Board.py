@@ -1,8 +1,3 @@
-from copy import deepcopy as dcopy
-
-from time import time
-
-from timeit import timeit
 
 # Constants
 
@@ -310,11 +305,12 @@ class ChessBoard():
             for cIdx in range(8):
                 square = self.__board[rIdx][cIdx]
                 if square != EMPTY:
-                    self.__positions[square] += [[rIdx, cIdx]]
+                    self.__positions[square] += [(rIdx, cIdx)]
 
         # True if the color can still castle on that side
         self.__white_can_castle_left = True
         self.__white_can_castle_right = True
+
         self.__black_can_castle_left = True
         self.__black_can_castle_right = True
 
@@ -374,19 +370,12 @@ class ChessBoard():
 
     @property
     def pieces(self):
-        return dcopy(self.__positions)
-    
-
-    def find_position(self, piece):
-        """
-        Returns a list of positions for the pieces with COLOR: color and NAME: name
-        """
-        return self.__positions[piece]
+        return self.__positions
 
 
     @property
     def can_white_castle(self):
-        return not self.__white_castled and (self.__white_can_castle_left or self.__white_can_castle_right)
+        return (not self.__white_castled) and (self.__white_can_castle_left or self.__white_can_castle_right)
     
 
     @property
@@ -395,14 +384,34 @@ class ChessBoard():
 
 
     @property
+    def white_can_castle_left(self):
+        return self.__white_can_castle_left
+
+
+    @property
+    def white_can_castle_right(self):
+        return self.__white_can_castle_right
+    
+
+    @property
     def can_black_castle(self):
-        return not self.__black_castled and (self.__black_can_castle_left or self.__black_can_castle_right)
+        return (not self.__black_castled) and (self.__black_can_castle_left or self.__black_can_castle_right)
     
 
     @property
     def black_castled(self):
         return self.__black_castled
 
+
+    @property
+    def black_can_castle_left(self):
+        return self.__black_can_castle_left
+
+
+    @property
+    def black_can_castle_right(self):
+        return self.__black_can_castle_right
+    
 
     @property
     def current_move(self):
@@ -426,16 +435,30 @@ class ChessBoard():
 
 
     @property
-    def winner(self):
+    def has_winner(self):
         """
         Returns the color of the winner is there is one, otherwise False.
         """
-        pass
+        if not self.pieces[WHITE_KING] and not self.pieces[BLACK_KING]:
+            raise Error("Both kings are gone!")
+        elif not self.pieces[WHITE_KING]:
+            return BLACK
+        elif not self.pieces[BLACK_KING]:
+            return WHITE
+        else:
+            return False
+
+
+    def find_position(self, piece):
+        """
+        Returns a list of positions for the pieces with COLOR: color and NAME: name
+        """
+        return self.__positions[piece]
 
 
     def get_piece(self, pos):
         """
-        Returns a tuple (piece, name, color) for the square at pos.
+        Returns a tuple (piece, name, color) for the square at pos. Use get_square unless you are sure that a piece at pos.
         """
         piece = self.__board[pos[0]][pos[1]]
 
@@ -491,10 +514,10 @@ class ChessBoard():
         self.__white_can_castle_right = False
         self.__white_castled = True
         
-        if rook_start == [7, 0]:
-            rook_end = [7, 2]
-        elif rook_start == [7, 7]:
-            rook_end = [7, 4]
+        if rook_start == (7, 0):
+            rook_end = (7, 2)
+        elif rook_start == (7, 7):
+            rook_end = (7, 4)
 
         if self.__board[rook_end[0]][rook_end[1]] != EMPTY:
             raise ValueError("White cannot castle the rooks end position is occupied.")
@@ -507,10 +530,10 @@ class ChessBoard():
         self.__black_can_castle_right = False
         self.__black_castled = True
 
-        if rook_start == [0, 0]:
-            rook_end = [0, 3]
-        elif rook_start == [0, 7]:
-            rook_end = [0, 5]
+        if rook_start == (0, 0):
+            rook_end = (0, 3)
+        elif rook_start == (0, 7):
+            rook_end = (0, 5)
 
         if self.__board[rook_end[0]][rook_end[1]] != EMPTY:
             raise ValueError("Black cannot castle the rooks end position is occupied.")
@@ -540,15 +563,15 @@ class ChessBoard():
         # Logic for pawns first move
         if color == WHITE and pos[0] == 6:  # Is the white pawn on its starting row
             if self.__board[pos[0] - 1][pos[1]] == EMPTY and self.__board[pos[0] - 2][pos[1]] == EMPTY:
-                moves.append([pos[0] - 2, pos[1]])
+                moves.append((pos[0] - 2, pos[1]))
         elif color == BLACK and pos[0] == 1:  # Is the black pawn on its starting row
             if self.__board[pos[0] + 1][pos[1]] == EMPTY and self.__board[pos[0] + 2][pos[1]] == EMPTY:
-                moves.append([pos[0] + 2, pos[1]])
+                moves.append((pos[0] + 2, pos[1]))
 
         # Iterate of the pieces movement directions 
         for direct in directions:
             rDir, cDir = direct  # Unpack the row and col directions
-            move_pos = [pos[0] + rDir, pos[1] + cDir]
+            move_pos = (pos[0] + rDir, pos[1] + cDir)
             # Is move_pos a valid pos on the board
             if self.is_on_board(move_pos):
                 move_square = self.get_square(move_pos)
@@ -577,7 +600,7 @@ class ChessBoard():
 
         for offset in directions:
             rOffset, cOffset = offset
-            move_pos = [pos[0] + rOffset, pos[1] + cOffset]
+            move_pos = (pos[0] + rOffset, pos[1] + cOffset)
 
             if self.is_on_board(move_pos):
                 move_square = self.get_square(move_pos)
@@ -597,27 +620,27 @@ class ChessBoard():
         directions = self.__PiecesCls.directions_of(piece)
 
         # Logic for castling, check position, maybe use propertys for the if-checking
-        if color == WHITE and pos[0] == 7 and pos[1] == 3:
+        if color == WHITE and pos[0] == (7, 3):
             if self.__white_can_castle_left:
-                if self.get_square([7, 1]) == EMPTY and self.get_square([7, 2]) == EMPTY:
+                if self.get_square((7, 1)) == EMPTY and self.get_square((7, 2)) == EMPTY:
                     moves.append([7, 1])
 
             if self.__white_can_castle_right:
-                if self.get_square([7, 4]) == EMPTY and self.get_square([7, 5]) == EMPTY and self.get_square([7, 6]) == EMPTY:
-                    moves.append([7, 5])
+                if self.get_square((7, 4)) == EMPTY and self.get_square((7, 5)) == EMPTY and self.get_square((7, 6)) == EMPTY:
+                    moves.append((7, 5))
 
-        elif color == BLACK and pos[0] == 0 and pos[1] == 4:
+        elif color == BLACK and pos == (0, 4):
             if self.__black_can_castle_left:
-                if self.get_square([0, 1]) == EMPTY and self.get_square([0, 2]) == EMPTY and self.get_square([0, 4]) == EMPTY:
-                    moves.append([0, 2])
+                if self.get_square((0, 1)) == EMPTY and self.get_square((0, 2)) == EMPTY and self.get_square((0, 4)) == EMPTY:
+                    moves.append((0, 2))
 
             if self.__black_can_castle_right:
-                if self.get_square([0, 5]) == EMPTY and self.get_square([0, 6]) == EMPTY:
-                    moves.append([0, 6])
+                if self.get_square((0, 5)) == EMPTY and self.get_square((0, 6)) == EMPTY:
+                    moves.append((0, 6))
 
         for direct in directions:
             rDir, cDir = direct
-            move_pos = [pos[0] + rDir, pos[1] + cDir]
+            move_pos = (pos[0] + rDir, pos[1] + cDir)
 
             if self.is_on_board(move_pos):
                 move_square = self.get_square(move_pos)
@@ -638,7 +661,7 @@ class ChessBoard():
 
         for direct in directions:
             rDir, cDir = direct
-            move_pos = [pos[0] + rDir, pos[1] + cDir]
+            move_pos = (pos[0] + rDir, pos[1] + cDir)
             while True:
                 if self.is_on_board(move_pos):
                     move_square = self.get_square(move_pos)
@@ -653,7 +676,7 @@ class ChessBoard():
                 else:
                     break
 
-                move_pos = [move_pos[0] + rDir, move_pos[1] + cDir]
+                move_pos = (move_pos[0] + rDir, move_pos[1] + cDir)
 
         return moves
 
@@ -669,6 +692,41 @@ class ChessBoard():
             return self.__get_king_moves(pos)
         else:
             return self.__get_normal_moves(pos)
+
+
+    @property
+    def all_white_moves(self):
+        pieces = self.white_pieces
+        moves = {}
+
+        for piece in pieces:
+            for pos in pieces[piece]:
+                piece_moves = self.get_moves(pos)
+                if len(piece_moves) > 0:
+                    moves.update({(piece, tuple(pos)): piece_moves})
+
+        return moves
+
+
+    @property
+    def all_black_moves(self):
+        pieces = self.black_pieces
+        moves = {}
+
+        for piece in pieces:
+            for pos in pieces[piece]: 
+                piece_moves = self.get_moves(pos)
+                if len(piece_moves) > 0:
+                    moves.update({(piece, tuple(pos)): piece_moves})
+
+        return moves
+
+
+    def next_color(self):
+        if self.__current_move == WHITE:
+            self.__current_move = BLACK
+        elif self.__current_move == BLACK:
+            self.__current_move = WHITE
 
 
     def move_piece(self, start_pos, end_pos, debug=False):
@@ -707,44 +765,46 @@ class ChessBoard():
         # Logic for pawn promotion
         if start_square == WHITE_PAWN and end_rIdx == 0:
             self.__white_promote(end_pos)
+
         elif start_square == BLACK_PAWN and end_rIdx == 7:
             self.__black_promote(end_pos)
         
         # Logic for white castling
-        elif self.can_white_castle:
-            if start_square == WHITE_KING: 
-                if self.__white_can_castle_left and end_pos == [7, 1]:
-                    self.__white_castle([7, 0])
-                elif self.__white_can_castle_right and end_pos == [7, 5]:
-                    self.__white_castle([7, 7])
-                else:
-                    self.__white_can_castle_left = False
-                    self.__white_can_castle_right = False
+        elif start_square == WHITE_KING:
+            if self.__white_can_castle_left and end_pos == (7, 1):
+                self.__white_castle((7, 0))
+            elif self.__white_can_castle_right and end_pos == (7, 5):
+                self.__white_castle((7, 7))
+            else:
+                self.__white_can_castle_left = False
+                self.__white_can_castle_right = False
 
-            # If one of the white rooks move, black cant castle with that rook 
-            elif start_square == WHITE_ROOK:
-                if start_pos == [7, 0]:
-                    self.__white_can_castle_left = False
-                elif start_square == [7, 7]:
-                    self.__white_can_castle_right = False
+        # If one of the white rooks move, white cant castle with that rook 
+        elif start_square == WHITE_ROOK:
+            if self.__white_can_castle_left and start_pos == (7, 0):
+                self.__white_can_castle_left = False
+            elif self.__white_can_castle_right and start_square == (7, 7):
+                self.__white_can_castle_right = False
 
         # Logic for black castling
-        elif self.can_black_castle:            
-            if start_square == BLACK_KING:
-                if self.__black_can_castle_left and end_pos == [0, 2]:
-                    self.__black_castle([0, 0])
-                elif self._black_castle_right and end_pos == [0, 6]:
-                    self.__black_castle([0, 7])
-                else:
-                    self.__black_can_castle_left = False
-                    self.__black_can_castle_right = False
+        elif start_square == BLACK_KING:        
+            if self.__black_can_castle_left and end_pos == (0, 2):
+                self.__black_castle((0, 0))
+            elif self.__black_can_castle_right and end_pos == (0, 6):
+                self.__black_castle((0, 7))
+            else:
+                self.__black_can_castle_left = False
+                self.__black_can_castle_right = False
 
-            # If one of the black rooks move, black cant castle with that rook  
-            elif start_square == BLACK_ROOK:
-                if start_pos == [0, 0]:
-                    self.__black_can_castle_left = False
-                elif start_pos == [0, 7]:
-                    self.__black_can_castle_right = False
+        # If one of the black rooks move, black cant castle with that rook  
+        elif start_square == BLACK_ROOK:
+            if self.__black_can_castle_left and start_pos == (0, 0):
+                self.__black_can_castle_left = False
+            elif self.__black_can_castle_right and start_pos == (0, 7):
+                self.__black_can_castle_right = False
+
+        # This must be called after the move is made
+        self.next_color()
 
         if debug:
             print("\n=== After move")
@@ -753,45 +813,3 @@ class ChessBoard():
             print("Board at start pos:", self.__board[start_rIdx][start_cIdx])
             print("Board at end pos:", self.__board[end_rIdx][end_cIdx])
 
-
-# This will not run if the file is imported.
-if __name__ == "__main__":
-    PieceHandler = ChessPieceHandler()
-    Board = ChessBoard(PieceHandler)
-    print("Piece names:", ChessPieceHandler().names)
-    print("Piece colors:", ChessPieceHandler().colors)
-
-    print(Board)
-    print("Moves of white pawn at [6, 0]:", Board.get_moves([6, 0]))
-    print("Moves of black pawn at [1, 0]:", Board.get_moves([1, 0]))
-    print("Moves of white knight at [7, 1]:", Board.get_moves([7, 1]))
-    print("Moves of white knight at [7, 6]:", Board.get_moves([7, 6]))
-    print("Moves of black knight at [0, 1]:", Board.get_moves([0, 1]))
-    print("Moves of black knight at [0, 6]:", Board.get_moves([0, 6]))
-    print("\nWhite pieces:", Board.white_pieces, "\n")
-    print("Black pieces:", Board.black_pieces, "\n")
-    print("Pieces:", Board.pieces, "\n")
-
-    for piece, positions in Board.pieces.items():
-        for pos in positions:
-            print("Piece:", piece, "At:", pos, "Moves:", Board.get_moves(pos))
-
-    print(Board.white_piece_value)
-    print(Board.black_piece_value)
-    print(Board.winner)
-    Board.move_piece([7, 1], [5, 1])
-    Board.move_piece([7, 2], [5, 2])
-    print(Board)
-    Board.move_piece([7, 3], [7, 1])
-    print(Board)
-    Board.move_piece([6, 0], [0, 0])
-    print(Board)
-
-    for piece, positions in Board.pieces.items():
-        for pos in positions:
-            print("Piece:", piece, "At:", pos, "Moves:", Board.get_moves(pos))
-
-    # for _ in range(10000):
-    #     for piece, positions in Board.pieces.items():
-    #         for pos in positions:
-    #             Board.get_moves(pos)
