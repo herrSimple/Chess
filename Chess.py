@@ -1,5 +1,5 @@
 # M269 Chess project
-# written by Marcel Antelme	on 15/06/20					
+# written by Marcel Antelme on 15/06/20                 
 
 from copy import deepcopy as dcopy
 
@@ -543,6 +543,7 @@ class ChessBoard():
         color = color_of(piece)
         moves = []
         directions = directions_of(piece)
+        # check_moves = [move for _, move in self.other_moves]
         # Logic for castling, check position, maybe use propertys for the if-checking
         if color == WHITE and pos == (7, 4):
             if self.__can_white_castle_left:
@@ -639,6 +640,13 @@ class ChessBoard():
             return self.white_moves
         else:
             return self.black_moves
+
+    @property
+    def other_moves(self):
+        if self.color_to_move == WHITE:
+            return self.black_moves
+        else:
+            return self.white_moves 
     
     def next_color(self):
         if self.__color_to_move == WHITE:
