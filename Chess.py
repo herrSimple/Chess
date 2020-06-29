@@ -1,3 +1,6 @@
+# M269 Chess project
+# written by Marcel Antelme	on 15/06/20					
+
 from copy import deepcopy as dcopy
 
 # Constants
